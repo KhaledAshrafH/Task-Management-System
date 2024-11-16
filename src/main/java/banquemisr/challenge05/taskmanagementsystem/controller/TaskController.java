@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 
-/**
- * This class handles API requests related to tasks.
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/tasks")
