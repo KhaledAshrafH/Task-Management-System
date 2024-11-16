@@ -51,6 +51,7 @@ public class TaskController {
     }
 
     @PostMapping("/assign")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignTask(@Valid @RequestBody TaskCreationDTO taskCreationDTO) {
         try {
             log.info("Assigning task: {}", taskCreationDTO);
