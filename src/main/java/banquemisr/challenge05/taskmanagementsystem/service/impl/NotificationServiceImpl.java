@@ -3,14 +3,12 @@ package banquemisr.challenge05.taskmanagementsystem.service.impl;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.request.NotificationCreationDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.NotificationResponseDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.entity.Notification;
-import banquemisr.challenge05.taskmanagementsystem.domain.entity.TaskHistory;
 import banquemisr.challenge05.taskmanagementsystem.domain.entity.User;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.NotificationStatus;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.UserRole;
 import banquemisr.challenge05.taskmanagementsystem.domain.mapper.NotificationMapper;
 import banquemisr.challenge05.taskmanagementsystem.exception.UnauthorizedAccessException;
 import banquemisr.challenge05.taskmanagementsystem.repository.NotificationRepository;
-import banquemisr.challenge05.taskmanagementsystem.repository.TaskRepository;
 import banquemisr.challenge05.taskmanagementsystem.repository.UserRepository;
 import banquemisr.challenge05.taskmanagementsystem.service.NotificationService;
 import banquemisr.challenge05.taskmanagementsystem.util.UtilityService;
@@ -64,7 +62,6 @@ public class NotificationServiceImpl implements NotificationService {
             else
                 throw new UnauthorizedAccessException("You are not allowed to assign this task.");
         }
-
     }
 
     private void sendEmailNotification(Notification notification) {
@@ -122,5 +119,4 @@ public class NotificationServiceImpl implements NotificationService {
     private boolean isAuthorizedToUpdate(Notification notification, User user) {
         return user.getId().equals(notification.getUser().getId());
     }
-
 }

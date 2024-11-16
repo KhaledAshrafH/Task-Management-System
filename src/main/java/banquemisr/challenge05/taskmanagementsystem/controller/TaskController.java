@@ -32,7 +32,6 @@ public class TaskController {
     private final TaskService taskService;
     private final TaskHistoryService taskHistoryService;
 
-
     @PostMapping
     public ResponseEntity<TaskResponseDTO> createTask(@Valid @RequestBody TaskCreationDTO taskCreationDTO) {
         log.info("Creating task: {}", taskCreationDTO);
@@ -48,7 +47,6 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable Long id, @Valid @RequestBody TaskUpdateDTO taskUpdateDTO) {
         log.info("Updating task: {}, {}", id, taskUpdateDTO);
@@ -56,14 +54,12 @@ public class TaskController {
         return ResponseEntity.ok(updatedTask);
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable Long id) {
         log.info("Getting task by ID: {}", id);
         TaskResponseDTO taskResponse = taskService.getTaskById(id);
         return ResponseEntity.ok(taskResponse);
     }
-
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -74,7 +70,6 @@ public class TaskController {
         Page<TaskResponseDTO> allTasks = taskService.getAllTasks(pageable);
         return ResponseEntity.ok(allTasks.getContent());
     }
-
 
     @GetMapping("/created")
     public ResponseEntity<List<TaskResponseDTO>> getAllCreatedTasks(@RequestParam(defaultValue = "0") int page,
@@ -93,7 +88,6 @@ public class TaskController {
         Page<TaskResponseDTO> allAssignedTasks = taskService.getAllAssignedTasks(pageable);
         return ResponseEntity.ok(allAssignedTasks.getContent());
     }
-
 
     @GetMapping("/assigned/{userId}")
     public ResponseEntity<List<TaskResponseDTO>> getAllAssignedTasksForUser (@PathVariable Long userId,

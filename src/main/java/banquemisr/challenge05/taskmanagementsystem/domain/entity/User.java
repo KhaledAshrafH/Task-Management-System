@@ -1,6 +1,5 @@
 package banquemisr.challenge05.taskmanagementsystem.domain.entity;
 
-
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -10,7 +9,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -114,5 +112,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
 }

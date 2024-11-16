@@ -5,7 +5,6 @@ import banquemisr.challenge05.taskmanagementsystem.domain.enums.TaskStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity

@@ -9,9 +9,7 @@ import banquemisr.challenge05.taskmanagementsystem.repository.UserRepository;
 import banquemisr.challenge05.taskmanagementsystem.service.UserService;
 import banquemisr.challenge05.taskmanagementsystem.util.UtilityService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service

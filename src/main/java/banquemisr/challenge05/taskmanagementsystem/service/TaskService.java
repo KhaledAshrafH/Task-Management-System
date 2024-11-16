@@ -7,21 +7,20 @@ import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.TaskRespo
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import java.util.List;
 
 @Transactional
 public interface TaskService {
     TaskResponseDTO createTask(TaskCreationDTO taskCreateDTO);
     TaskResponseDTO assignTask(TaskCreationDTO taskCreateDTO);
-
     TaskResponseDTO updateTask(Long id, TaskUpdateDTO taskUpdateDTO);
     TaskResponseDTO getTaskById(Long id);
+
     Page<TaskResponseDTO> getAllTasks(Pageable pageable);
     Page<TaskResponseDTO> getAllCreatedTasks(Pageable pageable);
     Page<TaskResponseDTO> getAllAssignedTasks(Pageable pageable);
     Page<TaskResponseDTO> getAllAssignedTasksForUser(Long id,Pageable pageable);
-    void deleteTaskById(Long id);
 
+    void deleteTaskById(Long id);
     List<TaskResponseDTO> searchAndFilterTasks(TaskSearchCriteriaDTO taskSearchCriteriaDTO);
 }

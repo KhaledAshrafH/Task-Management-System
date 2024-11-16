@@ -3,17 +3,14 @@ package banquemisr.challenge05.taskmanagementsystem.controller;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.NotificationResponseDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.TaskHistoryResponseDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.UserResponseDTO;
-import banquemisr.challenge05.taskmanagementsystem.exception.UnauthorizedAccessException;
 import banquemisr.challenge05.taskmanagementsystem.service.NotificationService;
 import banquemisr.challenge05.taskmanagementsystem.service.TaskHistoryService;
 import banquemisr.challenge05.taskmanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @Slf4j

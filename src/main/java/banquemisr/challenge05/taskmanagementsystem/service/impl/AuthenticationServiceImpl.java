@@ -17,9 +17,7 @@ import banquemisr.challenge05.taskmanagementsystem.repository.UserRepository;
 import banquemisr.challenge05.taskmanagementsystem.security.JwtTokenService;
 import banquemisr.challenge05.taskmanagementsystem.service.AuthenticationService;
 import banquemisr.challenge05.taskmanagementsystem.service.NotificationService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,8 +25,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -71,7 +67,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return createAuthenticationResponse(user, jwtToken);
     }
 
-
     @Override
     public void logout(HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
@@ -83,7 +78,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             revokeAllUserTokens(user);
         }
     }
-
 
     private void validateRegistrationInput(RegistrationRequestDTO registrationRequestDTO) {
         if (registrationRequestDTO.getUsername() == null || registrationRequestDTO.getUsername().isEmpty() ||
@@ -99,7 +93,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (userRepository.findByEmail(registrationRequestDTO.getEmail()).isPresent())
             throw new EmailAlreadyExistsException("Email already exists: " + registrationRequestDTO.getEmail());
-
     }
 
     private User createUserFromRegistration(RegistrationRequestDTO registrationRequestDTO) {

@@ -1,13 +1,11 @@
 package banquemisr.challenge05.taskmanagementsystem.domain.entity;
 
-
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.NotificationStatus;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity

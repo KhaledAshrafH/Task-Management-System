@@ -19,20 +19,16 @@ import banquemisr.challenge05.taskmanagementsystem.service.TaskService;
 import banquemisr.challenge05.taskmanagementsystem.util.UtilityService;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +40,7 @@ public class TaskServiceImpl implements TaskService {
     private final NotificationService notificationService;
 
     private static final String TASK_NOT_FOUND_MESSAGE = "Task not found";
+    private static final String USER_NOT_FOUND_MESSAGE = "User not found";
     private static final String UNAUTHORIZED_ACCESS_MESSAGE = "You are not allowed to perform this action";
     private static final String TASK_CREATION_DTO_NULL_MESSAGE = "TaskCreationDTO cannot be null";
     private static final String TASK_CREATION_DTO_TITLE_DESC_MESSAGE = "TaskCreationDTO must have a title and description";
@@ -72,10 +69,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponseDTO assignTask(TaskCreationDTO taskCreationDTO) {
         if (!hasPermissionToAssign())
-            throw new UnauthorizedAccessException("You are not allowed to assign tasks.");
+            throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
 
         User assignedUser = userRepository.findById(taskCreationDTO.getAssignedUserId())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException(USER_NOT_FOUND_MESSAGE));
         Task task = taskMapper.toEntity(taskCreationDTO);
         task.setStatus(TaskStatus.TODO);
         task.setCreatedBy(UtilityService.getCurrentUser());
@@ -97,7 +94,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndDeletedAtNull(taskId).orElseThrow(() -> new TaskNotFoundException("Task not found"));
 
         if (!hasPermissionToUpdate(task))
-            throw new UnauthorizedAccessException("You are not allowed to update this task.");
+            throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
 
         TaskStatus oldStatus = task.getStatus();
         updateTaskProperties(task, taskUpdateDTO);
@@ -120,7 +117,7 @@ public class TaskServiceImpl implements TaskService {
         User currentUser = UtilityService.getCurrentUser();
 
         Task task = taskRepository.findByIdAndDeletedAtNull(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new RuntimeException(TASK_NOT_FOUND_MESSAGE));
 
         if (currentUser.getRole() == UserRole.ADMIN)
             return taskMapper.toResponseDTO(task);
@@ -130,7 +127,7 @@ public class TaskServiceImpl implements TaskService {
                 return taskMapper.toResponseDTO(task);
 
             else
-                throw new UnauthorizedAccessException("You are not allowed to assign this task.");
+                throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
         }
     }
 
@@ -141,7 +138,7 @@ public class TaskServiceImpl implements TaskService {
             Page<Task> tasks = taskRepository.findAllByDeletedAtIsNull(pageable);
             return tasks.map(taskMapper::toResponseDTO);
         } else
-            throw new UnauthorizedAccessException("You are not allowed to get all tasks!");
+            throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
     }
 
     @Override
@@ -160,7 +157,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Page<TaskResponseDTO> getAllAssignedTasksForUser(Long id, Pageable pageable) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new NoSuchElementException(USER_NOT_FOUND_MESSAGE));
         User currentUser = UtilityService.getCurrentUser();
 
         if (currentUser.getRole() == UserRole.ADMIN ||
@@ -168,21 +165,21 @@ public class TaskServiceImpl implements TaskService {
             Page<Task> tasks = taskRepository.findAllByAssignedToAndDeletedAtNull(user, pageable);
             return tasks.map(taskMapper::toResponseDTO);
         } else
-            throw new RuntimeException("You are not allowed to assign these tasks.");
+            throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
 
     }
 
     @Override
     public void deleteTaskById(Long id) {
         User currentUser = UtilityService.getCurrentUser();
-        Task task = taskRepository.findByIdAndDeletedAtNull(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findByIdAndDeletedAtNull(id).orElseThrow(() -> new TaskNotFoundException(TASK_NOT_FOUND_MESSAGE));
 
         if (hasPermissionToUpdate(task, currentUser)) {
             task.setDeletedAt(LocalDateTime.now());
             taskRepository.save(task);
             logTaskHistory(task.getId(), ActionType.DELETED, task.getStatus(), null, null);
         } else
-            throw new RuntimeException("You are not allowed to delete this task");
+            throw new UnauthorizedAccessException(UNAUTHORIZED_ACCESS_MESSAGE);
     }
 
     @Override
@@ -201,7 +198,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Scheduled(fixedRate = 1200000) // every 20 minutes for testing
     protected void notifyTasksDueSoon() {
-        System.out.println("---------------------------------------------------Checking for due tasks: " + LocalDateTime.now());
         LocalDate now = LocalDate.now();
         LocalDate soonDue = now.plusDays(1);
 
@@ -310,17 +306,16 @@ public class TaskServiceImpl implements TaskService {
 
     private void validateTaskCreationDTO(TaskCreationDTO taskCreationDTO) {
         if (taskCreationDTO == null) {
-            throw new ValidationException("TaskCreationDTO cannot be null");
+            throw new ValidationException(TASK_CREATION_DTO_NULL_MESSAGE);
         }
 
         if(taskCreationDTO.getTitle()==null||taskCreationDTO.getDescription()==null){
-            throw new ValidationException("TaskCreationDTO must have a title and description");
+            throw new ValidationException(TASK_CREATION_DTO_TITLE_DESC_MESSAGE);
         }
 
         if (taskCreationDTO.getDueDate() != null && taskCreationDTO.getDueDate().isBefore(LocalDate.now())) {
-            throw new ValidationException("Due date must be in the future");
+            throw new ValidationException(DUE_DATE_PAST_MESSAGE);
         }
-
     }
 
 }

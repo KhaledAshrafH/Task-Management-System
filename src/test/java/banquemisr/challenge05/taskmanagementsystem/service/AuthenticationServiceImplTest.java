@@ -12,26 +12,21 @@ import banquemisr.challenge05.taskmanagementsystem.exception.UsernameAlreadyExis
 import banquemisr.challenge05.taskmanagementsystem.repository.TokenRepository;
 import banquemisr.challenge05.taskmanagementsystem.repository.UserRepository;
 import banquemisr.challenge05.taskmanagementsystem.security.JwtTokenService;
-import banquemisr.challenge05.taskmanagementsystem.service.NotificationService;
 import banquemisr.challenge05.taskmanagementsystem.service.impl.AuthenticationServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.Collections;
 import java.util.Optional;
-
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

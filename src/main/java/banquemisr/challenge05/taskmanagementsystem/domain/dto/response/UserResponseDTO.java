@@ -1,12 +1,10 @@
 package banquemisr.challenge05.taskmanagementsystem.domain.dto.response;
 
-import banquemisr.challenge05.taskmanagementsystem.domain.enums.UserRole;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Data
