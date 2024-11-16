@@ -2,8 +2,10 @@ package banquemisr.challenge05.taskmanagementsystem.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,47 +13,79 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ProblemDetail createProblemDetail(HttpStatus status, String message, String description) {
-        ProblemDetail errorDetail = ProblemDetail.forStatusAndDetail(status, message);
-        errorDetail.setProperty("description", description);
-        return errorDetail;
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<String> handleInvalidTokenException(InvalidTokenException ex) {
+        log.warn("Invalid Token: {}", ex.getMessage());
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ProblemDetail> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        log.warn("Registration failed: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.CONFLICT, ex.getMessage(), "Registration failed: Username already exists.");
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ProblemDetail> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        log.warn("Registration failed : {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.CONFLICT, ex.getMessage(), "Registration failed: Email already exists.");
+    }
+
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidInput(InvalidInputException ex) {
+        log.warn("Invalid input: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Invalid input provided.");
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ProblemDetail handleMissingParameterException(MissingServletRequestParameterException exception) {
-        return createProblemDetail(HttpStatus.BAD_REQUEST, exception.getMessage(), "Required request parameter is missing.");
+    public ResponseEntity<ProblemDetail> handleMissingParameterException(MissingServletRequestParameterException ex) {
+        log.warn("Missing request parameter: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Required request parameter is missing.");
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ProblemDetail handleBadCredentialsException(BadCredentialsException exception) {
-        return createProblemDetail(HttpStatus.UNAUTHORIZED, exception.getMessage(), "The username or password is incorrect");
+    public ResponseEntity<ProblemDetail> handleBadCredentialsException(BadCredentialsException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "The username or password is incorrect.");
     }
 
     @ExceptionHandler(AccountStatusException.class)
-    public ProblemDetail handleAccountStatusException(AccountStatusException exception) {
-        return createProblemDetail(HttpStatus.FORBIDDEN, exception.getMessage(), "The account is locked");
+    public ResponseEntity<ProblemDetail> handleAccountStatusException(AccountStatusException ex) {
+        log.warn("Account status issue: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "The account is locked.");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ProblemDetail handleAccessDeniedException(AccessDeniedException exception) {
-        return createProblemDetail(HttpStatus.FORBIDDEN, exception.getMessage(), "You are not authorized to access this resource");
+    public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "You are not authorized to access this resource.");
     }
 
     @ExceptionHandler(SignatureException.class)
-    public ProblemDetail handleSignatureException(SignatureException exception) {
-        return createProblemDetail(HttpStatus.FORBIDDEN, exception.getMessage(), "The JWT signature is invalid");
+    public ResponseEntity<ProblemDetail> handleSignatureException(SignatureException ex) {
+        log.warn("Invalid JWT signature: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "The JWT signature is invalid.");
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
-    public ProblemDetail handleExpiredJwtException(ExpiredJwtException exception) {
-        return createProblemDetail(HttpStatus.FORBIDDEN, exception.getMessage(), "The JWT token has expired");
+    public ResponseEntity<ProblemDetail> handleExpiredJwtException(ExpiredJwtException ex) {
+        log.warn("Expired JWT token: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "The JWT token has expired.");
     }
 
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleGenericException(Exception exception) {
-        return createProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), "Unknown internal server error.");
+    public ResponseEntity<ProblemDetail> handleGenericException(Exception ex) {
+        log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
+        return createProblemDetailResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.", "Unknown internal server error.");
+    }
+
+    private ResponseEntity<ProblemDetail> createProblemDetailResponse(HttpStatus status, String message, String description) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, message);
+        problemDetail.setProperty("description", description);
+        return ResponseEntity.status(status).body(problemDetail);
     }
 }

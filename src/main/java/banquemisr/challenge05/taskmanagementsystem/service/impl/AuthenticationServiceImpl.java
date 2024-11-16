@@ -9,6 +9,9 @@ import banquemisr.challenge05.taskmanagementsystem.domain.entity.User;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.NotificationType;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.TokenType;
 import banquemisr.challenge05.taskmanagementsystem.domain.enums.UserRole;
+import banquemisr.challenge05.taskmanagementsystem.exception.EmailAlreadyExistsException;
+import banquemisr.challenge05.taskmanagementsystem.exception.InvalidInputException;
+import banquemisr.challenge05.taskmanagementsystem.exception.UsernameAlreadyExistsException;
 import banquemisr.challenge05.taskmanagementsystem.repository.TokenRepository;
 import banquemisr.challenge05.taskmanagementsystem.repository.UserRepository;
 import banquemisr.challenge05.taskmanagementsystem.security.JwtTokenService;
@@ -26,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,13 +43,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponseDTO register(RegistrationRequestDTO registrationRequestDTO) {
+        validateRegistrationInput(registrationRequestDTO);
+        checkIfUserExists(registrationRequestDTO);
+
         User user = createUserFromRegistration(registrationRequestDTO);
         User savedUser = userRepository.save(user);
 
         sendRegistrationNotification(savedUser);
-
         String jwtToken = jwtService.generateToken(user);
         saveUserToken(savedUser, jwtToken);
+
         return createAuthenticationResponse(savedUser, jwtToken);
     }
 
@@ -57,10 +64,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         sendLoginNotification(user);
-
         String jwtToken = jwtService.generateToken(user);
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
+
         return createAuthenticationResponse(user, jwtToken);
     }
 
@@ -72,11 +79,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String token = authHeader.substring(7);
             String username = jwtService.extractUsername(token);
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("Invalid token"));
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
             revokeAllUserTokens(user);
         }
     }
 
+
+    private void validateRegistrationInput(RegistrationRequestDTO registrationRequestDTO) {
+        if (registrationRequestDTO.getUsername() == null || registrationRequestDTO.getUsername().isEmpty() ||
+                registrationRequestDTO.getEmail() == null || registrationRequestDTO.getEmail().isEmpty() ||
+                registrationRequestDTO.getPassword() == null || registrationRequestDTO.getPassword().isEmpty()) {
+            throw new InvalidInputException("Invalid input: Username, email, and password are required.");
+        }
+    }
+
+    private void checkIfUserExists(RegistrationRequestDTO registrationRequestDTO) {
+        if (userRepository.findByUsername(registrationRequestDTO.getUsername()).isPresent())
+            throw new UsernameAlreadyExistsException("Username already exists: " + registrationRequestDTO.getUsername());
+
+        if (userRepository.findByEmail(registrationRequestDTO.getEmail()).isPresent())
+            throw new EmailAlreadyExistsException("Email already exists: " + registrationRequestDTO.getEmail());
+
+    }
 
     private User createUserFromRegistration(RegistrationRequestDTO registrationRequestDTO) {
         return User.builder()
@@ -132,15 +156,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokensByUserId(user.getId());
+        List<Token> validUserTokens = tokenRepository.findAllValidTokensByUserId(user.getId());
         if (validUserTokens.isEmpty())
             return;
 
         validUserTokens.forEach(token -> {
             token.setExpired(true);
             token.setRevoked(true);
+            tokenRepository.save(token);
         });
-        tokenRepository.saveAll(validUserTokens);
     }
-
 }
