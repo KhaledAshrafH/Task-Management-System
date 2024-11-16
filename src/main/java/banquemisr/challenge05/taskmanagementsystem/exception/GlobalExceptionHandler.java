@@ -13,6 +13,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.NoSuchElementException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -75,6 +77,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleExpiredJwtException(ExpiredJwtException ex) {
         log.warn("Expired JWT token: {}", ex.getMessage());
         return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "The JWT token has expired.");
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ProblemDetail> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
+        log.warn("Unauthorized Access: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "Unauthorized Access!");
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ProblemDetail> handleUnauthorizedAccess(NoSuchElementException ex) {
+        log.warn("This Element Not found!: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "This Element Not found!");
+    }
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleTaskNotFound(TaskNotFoundException ex) {
+        log.warn("This Task Not found!: {}", ex.getMessage());
+        return createProblemDetailResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "This Task Not found!");
     }
 
     @ExceptionHandler(Exception.class)

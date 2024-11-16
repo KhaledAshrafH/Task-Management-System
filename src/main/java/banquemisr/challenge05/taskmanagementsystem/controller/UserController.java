@@ -27,85 +27,44 @@ public class UserController {
 
     @GetMapping("admin/users")
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<?> getAllUsers() {
-        try {
-            List<UserResponseDTO> users = userService.getAllUsers();
-            log.info("Fetched all users successfully");
-            return ResponseEntity.status(HttpStatus.OK).body(users);
-        }
-        catch (UnauthorizedAccessException e) {
-            log.warn("Unauthorized access attempted to fetch all users");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
-        catch (Exception e) {
-            log.error("Error fetching all users: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching users");
-        }
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        List<UserResponseDTO> users = userService.getAllUsers();
+        log.info("Fetched all users successfully");
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("users/me/history")
-    ResponseEntity<?> getUserTaskHistory() {
-        try {
-            List<TaskHistoryResponseDTO> userTaskHistory = taskHistoryService.getUserTaskHistory();
-            log.info("Fetched task history for current user successfully");
-            return ResponseEntity.status(HttpStatus.OK).body(userTaskHistory);
-        }
-        catch (UnauthorizedAccessException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
+    public ResponseEntity<List<TaskHistoryResponseDTO>> getUserTaskHistory() {
+        List<TaskHistoryResponseDTO> userTaskHistory = taskHistoryService.getUserTaskHistory();
+        log.info("Fetched task history for current user successfully");
+        return ResponseEntity.ok(userTaskHistory);
     }
 
     @GetMapping("users/me/notifications")
-    public ResponseEntity<?> getAllNotificationsForUser() {
-        try {
-            List<NotificationResponseDTO> notifications = notificationService.getNotificationsForCurrentUser();
-            log.info("Fetched notifications for current user successfully");
-            return ResponseEntity.ok(notifications);
-        }
-        catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching notifications");
-        }
+    public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsForUser () {
+        List<NotificationResponseDTO> notifications = notificationService.getNotificationsForCurrentUser ();
+        log.info("Fetched notifications for current user successfully");
+        return ResponseEntity.ok(notifications);
     }
 
     @GetMapping("users/{userId}/notifications")
-    public ResponseEntity<?> getAllNotificationsForUser(@PathVariable Long userId) {
-        try {
-            List<NotificationResponseDTO> notifications = notificationService.getNotificationsForSpecificUser(userId);
-            log.info("Fetched notifications for user id: {} successfully", userId);
-            return ResponseEntity.ok(notifications);
-        }
-        catch (UnauthorizedAccessException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
+    public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsForUser (@PathVariable Long userId) {
+        List<NotificationResponseDTO> notifications = notificationService.getNotificationsForSpecificUser (userId);
+        log.info("Fetched notifications for user id: {} successfully", userId);
+        return ResponseEntity.ok(notifications);
     }
 
     @DeleteMapping("users/me/notifications/{notificationId}")
-    public ResponseEntity<?> deleteNotification(@PathVariable Long notificationId) {
-        try{
-            notificationService.deleteNotification(notificationId);
-            log.info("Deleted notification id: {} successfully", notificationId);
-            return ResponseEntity.noContent().build();
-        }
-        catch (UnauthorizedAccessException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
-        catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId) {
+        notificationService.deleteNotification(notificationId);
+        log.info("Deleted notification id: {} successfully", notificationId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("users/me/notifications/{notificationId}")
-    public ResponseEntity<?> markNotificationAsRead(@PathVariable Long notificationId) {
-        try {
-            notificationService.markNotificationAsRead(notificationId);
-            log.info("Marked notification id: {} as read successfully", notificationId);
-            return ResponseEntity.ok("The notification has been marked as read");
-        }
-        catch (UnauthorizedAccessException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
-        catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+    public ResponseEntity<String> markNotificationAsRead(@PathVariable Long notificationId) {
+        notificationService.markNotificationAsRead(notificationId);
+        log.info("Marked notification id: {} as read successfully", notificationId);
+        return ResponseEntity.ok("The notification has been marked as read");
     }
 }

@@ -18,17 +18,21 @@ import banquemisr.challenge05.taskmanagementsystem.service.TaskHistoryService;
 import banquemisr.challenge05.taskmanagementsystem.service.TaskService;
 import banquemisr.challenge05.taskmanagementsystem.util.UtilityService;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +43,16 @@ public class TaskServiceImpl implements TaskService {
     private final TaskHistoryService taskHistoryService;
     private final NotificationService notificationService;
 
+    private static final String TASK_NOT_FOUND_MESSAGE = "Task not found";
+    private static final String UNAUTHORIZED_ACCESS_MESSAGE = "You are not allowed to perform this action";
+    private static final String TASK_CREATION_DTO_NULL_MESSAGE = "TaskCreationDTO cannot be null";
+    private static final String TASK_CREATION_DTO_TITLE_DESC_MESSAGE = "TaskCreationDTO must have a title and description";
+    private static final String DUE_DATE_PAST_MESSAGE = "Due date must be in the future";
+
     @Override
     public TaskResponseDTO createTask(TaskCreationDTO taskCreationDTO) {
+        validateTaskCreationDTO(taskCreationDTO);
+
         User currentUser = UtilityService.getCurrentUser();
         Task task = taskMapper.toEntity(taskCreationDTO);
         task.setStatus(taskCreationDTO.getStatus() != null ? taskCreationDTO.getStatus() : TaskStatus.TODO);
@@ -48,7 +60,6 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedTo(currentUser);
 
         Task savedTask = taskRepository.save(task);
-
         logTaskHistory(savedTask.getId(), ActionType.CREATED, null, savedTask.getStatus(), null);
 
         String message = "A new task \"" + savedTask.getTitle() + "\" has been created.";
@@ -63,7 +74,8 @@ public class TaskServiceImpl implements TaskService {
         if (!hasPermissionToAssign())
             throw new UnauthorizedAccessException("You are not allowed to assign tasks.");
 
-        User assignedUser = userRepository.findById(taskCreationDTO.getAssignedUserId()).orElseThrow(() -> new NoSuchElementException("User not found"));
+        User assignedUser = userRepository.findById(taskCreationDTO.getAssignedUserId())
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
         Task task = taskMapper.toEntity(taskCreationDTO);
         task.setStatus(TaskStatus.TODO);
         task.setCreatedBy(UtilityService.getCurrentUser());
@@ -100,24 +112,6 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return taskMapper.toResponseDTO(savedTask);
-
-    }
-
-    private void updateTaskProperties(Task task, TaskUpdateDTO taskUpdateDTO) {
-        if (taskUpdateDTO.getTitle() != null)
-            task.setTitle(taskUpdateDTO.getTitle());
-
-        if (taskUpdateDTO.getDescription() != null)
-            task.setDescription(taskUpdateDTO.getDescription());
-
-        if (taskUpdateDTO.getStatus() != null)
-            task.setStatus(taskUpdateDTO.getStatus());
-
-        if (taskUpdateDTO.getPriority() != null)
-            task.setPriority(taskUpdateDTO.getPriority());
-
-        if (taskUpdateDTO.getDueDate() != null)
-            task.setDueDate(taskUpdateDTO.getDueDate());
     }
 
 
@@ -146,8 +140,7 @@ public class TaskServiceImpl implements TaskService {
         if (currentUser.getRole() == UserRole.ADMIN) {
             Page<Task> tasks = taskRepository.findAllByDeletedAtIsNull(pageable);
             return tasks.map(taskMapper::toResponseDTO);
-        }
-        else
+        } else
             throw new UnauthorizedAccessException("You are not allowed to get all tasks!");
     }
 
@@ -174,8 +167,7 @@ public class TaskServiceImpl implements TaskService {
                 (currentUser.getRole() == UserRole.USER && currentUser.getId().equals(id))) {
             Page<Task> tasks = taskRepository.findAllByAssignedToAndDeletedAtNull(user, pageable);
             return tasks.map(taskMapper::toResponseDTO);
-        }
-        else
+        } else
             throw new RuntimeException("You are not allowed to assign these tasks.");
 
     }
@@ -185,12 +177,11 @@ public class TaskServiceImpl implements TaskService {
         User currentUser = UtilityService.getCurrentUser();
         Task task = taskRepository.findByIdAndDeletedAtNull(id).orElseThrow(() -> new RuntimeException("Task not found"));
 
-        if (hasPermissionToUpdate(task,currentUser)) {
+        if (hasPermissionToUpdate(task, currentUser)) {
             task.setDeletedAt(LocalDateTime.now());
             taskRepository.save(task);
             logTaskHistory(task.getId(), ActionType.DELETED, task.getStatus(), null, null);
-        }
-        else
+        } else
             throw new RuntimeException("You are not allowed to delete this task");
     }
 
@@ -218,9 +209,28 @@ public class TaskServiceImpl implements TaskService {
 
         for (Task task : tasksDueSoon) {
             String message = "Reminder: The task \"" + task.getTitle() + "\" is due tomorrow!";
-            sendNotification(task.getAssignedTo().getId(),message,NotificationType.TASK_DUE_SOON);
+            sendNotification(task.getAssignedTo().getId(), message, NotificationType.TASK_DUE_SOON);
         }
     }
+
+    private void updateTaskProperties(Task task, TaskUpdateDTO taskUpdateDTO) {
+        if (taskUpdateDTO.getTitle() != null)
+            task.setTitle(taskUpdateDTO.getTitle());
+
+        if (taskUpdateDTO.getDescription() != null)
+            task.setDescription(taskUpdateDTO.getDescription());
+
+        if (taskUpdateDTO.getStatus() != null)
+            task.setStatus(taskUpdateDTO.getStatus());
+
+        if (taskUpdateDTO.getPriority() != null)
+            task.setPriority(taskUpdateDTO.getPriority());
+
+        if (taskUpdateDTO.getDueDate() != null)
+            task.setDueDate(taskUpdateDTO.getDueDate());
+    }
+
+
 
     private void logTaskHistory(Long taskId, ActionType actionType, TaskStatus oldStatus, TaskStatus newStatus, String changedDescription) {
         TaskHistoryLogDTO taskHistoryLogDTO = TaskHistoryLogDTO.builder()
@@ -243,7 +253,7 @@ public class TaskServiceImpl implements TaskService {
                 || (currentUser.getRole() == UserRole.USER && currentUser.getId().equals(task.getAssignedTo().getId()));
     }
 
-    private boolean hasPermissionToUpdate(Task task,User currentUser) {
+    private boolean hasPermissionToUpdate(Task task, User currentUser) {
         return currentUser.getRole() == UserRole.ADMIN
                 || (currentUser.getRole() == UserRole.USER && currentUser.getId().equals(task.getAssignedTo().getId()));
     }
@@ -297,4 +307,20 @@ public class TaskServiceImpl implements TaskService {
                 .build();
         notificationService.sendNotification(notification);
     }
+
+    private void validateTaskCreationDTO(TaskCreationDTO taskCreationDTO) {
+        if (taskCreationDTO == null) {
+            throw new ValidationException("TaskCreationDTO cannot be null");
+        }
+
+        if(taskCreationDTO.getTitle()==null||taskCreationDTO.getDescription()==null){
+            throw new ValidationException("TaskCreationDTO must have a title and description");
+        }
+
+        if (taskCreationDTO.getDueDate() != null && taskCreationDTO.getDueDate().isBefore(LocalDate.now())) {
+            throw new ValidationException("Due date must be in the future");
+        }
+
+    }
+
 }
