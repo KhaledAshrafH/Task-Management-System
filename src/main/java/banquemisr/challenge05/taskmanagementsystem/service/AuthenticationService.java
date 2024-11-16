@@ -9,8 +9,6 @@ import jakarta.transaction.Transactional;
 @Transactional
 public interface AuthenticationService {
     AuthenticationResponseDTO register(RegistrationRequestDTO input);
-
     AuthenticationResponseDTO login(LoginRequestDTO input);
-
     void logout(HttpServletRequest httpServletRequest);
 }

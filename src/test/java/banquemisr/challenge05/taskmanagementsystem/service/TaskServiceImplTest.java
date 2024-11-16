@@ -1,7 +1,5 @@
 package banquemisr.challenge05.taskmanagementsystem.service;
-import banquemisr.challenge05.taskmanagementsystem.domain.dto.request.NotificationCreationDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.request.TaskCreationDTO;
-import banquemisr.challenge05.taskmanagementsystem.domain.dto.request.TaskSearchCriteriaDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.dto.response.TaskResponseDTO;
 import banquemisr.challenge05.taskmanagementsystem.domain.entity.Task;
 import banquemisr.challenge05.taskmanagementsystem.domain.entity.User;
@@ -21,11 +19,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -63,7 +59,6 @@ public class TaskServiceImplTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(mockUser , null, mockUser .getAuthorities())
         );
-
 
         task = new Task();
         task.setId(1L);
